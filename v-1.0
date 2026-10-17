@@ -1,0 +1,211 @@
+import customtkinter as ctk
+from docx import Document
+from docx.shared import RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls
+import tkinter.messagebox as msgbox
+from tkinter import filedialog
+
+# Apariencia clara y limpia para entorno escolar / oficina
+ctk.set_appearance_mode("Light")
+ctk.set_default_color_theme("blue")
+
+class AppPlaneaciones(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("Asistente de Planeaciones Didácticas - Demo v1.0")
+        self.geometry("700x750")
+
+        # Título Principal
+        self.lbl_title = ctk.CTkLabel(
+            self, 
+            text="Generador de Planeaciones Didácticas", 
+            font=ctk.CTkFont(size=20, weight="bold")
+        )
+        self.lbl_title.pack(pady=(15, 10))
+
+        # Contenedor Scrollable para los campos
+        self.scroll_frame = ctk.CTkScrollableFrame(self, width=640, height=580)
+        self.scroll_frame.pack(fill="both", expand=True, padx=20, pady=10)
+
+        # SECCIÓN 1: DATOS GENERALES
+        self.add_section_header("1. Datos Generales")
+        self.txt_docente = self.add_input_field("Nombre del Docente:")
+        self.txt_escuela = self.add_input_field("Escuela / Institución:")
+        self.txt_materia = self.add_input_field("Asignatura / Materia:")
+        self.txt_grado = self.add_input_field("Grado y Grupo:")
+        self.txt_periodo = self.add_input_field("Periodo / Fecha:")
+
+        # SECCIÓN 2: CURRÍCULA
+        self.add_section_header("2. Encuadre Curricular")
+        self.txt_tema = self.add_input_field("Tema General:")
+        self.txt_aprendizaje = self.add_textbox_field("Aprendizaje Esperado / Propósito:")
+
+        # SECCIÓN 3: SECUENCIA DIDÁCTICA
+        self.add_section_header("3. Secuencia Didáctica")
+        self.txt_inicio = self.add_textbox_field("Inicio (Enganche / Saberes previos):")
+        self.txt_desarrollo = self.add_textbox_field("Desarrollo (Actividades principales):")
+        self.txt_cierre = self.add_textbox_field("Cierre (Evaluación / Puesta en común):")
+
+        # SECCIÓN 4: RECURSOS Y EVALUACIÓN
+        self.add_section_header("4. Recursos y Evaluación")
+        self.txt_recursos = self.add_textbox_field("Recursos y Materiales:")
+        self.txt_evaluacion = self.add_textbox_field("Criterios e Instrumentos de Evaluación:")
+
+        # BOTÓN GENERAR (Verde/Gris Institucional sobrio)
+        self.btn_generar = ctk.CTkButton(
+            self, 
+            text="📄 Guardar Planeación Word (.docx)", 
+            command=self.generar_word,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=42,
+            fg_color="#1E4D2B", # Verde institucional/escolar sobrio
+            hover_color="#14341D"
+        )
+        self.btn_generar.pack(pady=15)
+
+    def add_section_header(self, text):
+        lbl = ctk.CTkLabel(
+            self.scroll_frame, 
+            text=text, 
+            font=ctk.CTkFont(size=15, weight="bold"),
+            anchor="w"
+        )
+        lbl.pack(fill="x", pady=(15, 5))
+
+    def add_input_field(self, label_text):
+        lbl = ctk.CTkLabel(self.scroll_frame, text=label_text, anchor="w")
+        lbl.pack(fill="x", pady=(2, 0))
+        entry = ctk.CTkEntry(self.scroll_frame)
+        entry.pack(fill="x", pady=(0, 5))
+        return entry
+
+    def add_textbox_field(self, label_text):
+        lbl = ctk.CTkLabel(self.scroll_frame, text=label_text, anchor="w")
+        lbl.pack(fill="x", pady=(2, 0))
+        tb = ctk.CTkTextbox(self.scroll_frame, height=70)
+        tb.pack(fill="x", pady=(0, 5))
+        return tb
+
+    def set_cell_background(self, cell, fill_hex):
+        shading = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{fill_hex}"/>')
+        cell._tc.get_or_add_tcPr().append(shading)
+
+    def generar_word(self):
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".docx",
+            filetypes=[("Documento de Word", "*.docx"), ("Todos los archivos", "*.*")],
+            title="Guardar Planeación Didáctica",
+            initialfile="Planeacion_Didactica.docx"
+        )
+        
+        if not filepath:
+            return
+
+        # Recopilar datos
+        docente = self.txt_docente.get().strip() or "N/A"
+        escuela = self.txt_escuela.get().strip() or "N/A"
+        materia = self.txt_materia.get().strip() or "N/A"
+        grado = self.txt_grado.get().strip() or "N/A"
+        periodo = self.txt_periodo.get().strip() or "N/A"
+        tema = self.txt_tema.get().strip() or "N/A"
+        
+        aprendizaje = self.txt_aprendizaje.get("1.0", "end-1c").strip() or "N/A"
+        inicio = self.txt_inicio.get("1.0", "end-1c").strip() or "N/A"
+        desarrollo = self.txt_desarrollo.get("1.0", "end-1c").strip() or "N/A"
+        cierre = self.txt_cierre.get("1.0", "end-1c").strip() or "N/A"
+        recursos = self.txt_recursos.get("1.0", "end-1c").strip() or "N/A"
+        evaluacion = self.txt_evaluacion.get("1.0", "end-1c").strip() or "N/A"
+
+        doc = Document()
+
+        # Título en el documento
+        title = doc.add_heading("PLANEACIÓN DIDÁCTICA", level=0)
+        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        # PALETA FORMAL Y SOBRIA (Sin azul eléctrico ni negro)
+        COLOR_ENCABEZADO = "1C3144"  # Azul marino muy oscuro / grisáceo sobrio
+        COLOR_FONDO_TABLA = "F4F6F7" # Gris claro hueso para celdas
+        COLOR_FONDO_SEC = "E5E8E8"   # Gris sutil para contraste
+
+        # Tabla 1: Datos Generales
+        table_gen = doc.add_table(rows=3, cols=2)
+        table_gen.alignment = WD_TABLE_ALIGNMENT.CENTER
+        
+        data_gen = [
+            [f"Docente: {docente}", f"Escuela: {escuela}"],
+            [f"Asignatura: {materia}", f"Grado/Grupo: {grado}"],
+            [f"Periodo: {periodo}", f"Tema: {tema}"]
+        ]
+
+        for i, row in enumerate(table_gen.rows):
+            for j, cell in enumerate(row.cells):
+                cell.text = data_gen[i][j]
+                self.set_cell_background(cell, COLOR_FONDO_TABLA)
+
+        doc.add_paragraph()
+
+        # Tabla 2: Aprendizaje Esperado
+        table_app = doc.add_table(rows=1, cols=1)
+        cell_app = table_app.rows[0].cells[0]
+        cell_app.text = f"APRENDIZAJE ESPERADO / PROPÓSITO:\n{aprendizaje}"
+        self.set_cell_background(cell_app, COLOR_FONDO_SEC)
+
+        doc.add_paragraph()
+
+        # Tabla 3: Secuencia Didáctica
+        table_seq = doc.add_table(rows=4, cols=2)
+        table_seq.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+        # Encabezados de la tabla con azul marino oscuro sobrio
+        hdr_cells = table_seq.rows[0].cells
+        hdr_cells[0].text = "Fase de la Clase"
+        hdr_cells[1].text = "Actividades"
+        for cell in hdr_cells:
+            self.set_cell_background(cell, COLOR_ENCABEZADO)
+            for p in cell.paragraphs:
+                for run in p.runs:
+                    run.font.color.rgb = RGBColor(255, 255, 255) # Texto blanco
+                    run.font.bold = True
+
+        fases = [
+            ("Inicio", inicio),
+            ("Desarrollo", desarrollo),
+            ("Cierre", cierre)
+        ]
+
+        for idx, (fase_nombre, fase_texto) in enumerate(fases, start=1):
+            row_cells = table_seq.rows[idx].cells
+            row_cells[0].text = fase_nombre
+            row_cells[1].text = fase_texto
+            self.set_cell_background(row_cells[0], COLOR_FONDO_TABLA)
+
+        doc.add_paragraph()
+
+        # Tabla 4: Recursos y Evaluación
+        table_rec = doc.add_table(rows=2, cols=2)
+        
+        r1 = table_rec.rows[0].cells
+        r1[0].text = "Recursos y Materiales:"
+        r1[1].text = recursos
+
+        r2 = table_rec.rows[1].cells
+        r2[0].text = "Evaluación:"
+        r2[1].text = evaluacion
+
+        for row in table_rec.rows:
+            for cell in row.cells:
+                self.set_cell_background(cell, COLOR_FONDO_TABLA)
+
+        try:
+            doc.save(filepath)
+            msgbox.showinfo("Éxito", f"¡Planeación guardada correctamente en:\n{filepath}")
+        except Exception as e:
+            msgbox.showerror("Error", f"No se pudo guardar el archivo.\nDetalle: {e}")
+
+if __name__ == "__main__":
+    app = AppPlaneaciones()
+    app.mainloop()
