@@ -42,8 +42,8 @@ Abaratar y simplificar el proceso administrativo de creación de planeaciones do
 ## Hoja de Ruta (Roadmap)
 
 - [x] **v1.0 (MVP Demo):** Captura de datos individual y exportación directa a Word con tablas estilizadas.
-- [ ] **v1.5 (Adaptación Semanal / NEM):** Incorporación de vista por sesiones/días de la semana (Lunes a Viernes) y campos de Ejes Articuladores.
-- [ ] **v2.0 (Vista Previa e Imágenes):** Implementación de panel de previsualización en tiempo real e inserción de logotipos escolares en el encabezado.
+- [x] **v1.2 (Adaptación Semanal / NEM):** Incorporación de vista por sesiones/días de la semana (Lunes a Viernes) y campos de Ejes Articuladores.
+- [x] **v1.5 (Vista Previa e Imágenes):** Implementación de panel de previsualización en tiempo real e inserción de logotipos escolares en el encabezado.
 
 ---
 
